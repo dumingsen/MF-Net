@@ -2,7 +2,6 @@ import torch
 import os
 import argparse
 from torch.autograd import Variable
-
 from UtilCollection.util import compute_F1_score, exponential_decay, save_result, plot_roc, random_seed
 from dataloader.read_UEA import load_UEA
 import time
@@ -12,14 +11,11 @@ from tensorboardX import SummaryWriter
 import matplotlib.pyplot as plt
 from model.net import  gtnet##导入包,net_spatial  net_global
 from model.layer import *
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 length = 1536 * 2
 writer = SummaryWriter('runs/exp')
-
 parser = argparse.ArgumentParser(description='MF-Net for MTSC')
 ###===================================================================================
-
 parser.add_argument('--log_interval', type=int, default=2000, metavar='N',
                     help='report interval')
 parser.add_argument('--save', type=str, default='model/model.pt',
@@ -36,32 +32,23 @@ parser.add_argument('--dropout',type=float,default=50,help='dropout rate')
 parser.add_argument('--subgraph_size',type=int,default=20,help='k')
 parser.add_argument('--node_dim',type=int,default=40,help='dim of nodes')
 parser.add_argument('--dilation_exponential',type=int,default=2,help='dilation exponential')
-
 parser.add_argument('--conv_channels',type=int,default=16,help='convolution channels')
 parser.add_argument('--residual_channels',type=int,default=16,help='residual channels')##
 parser.add_argument('--skip_channels',type=int,default=32,help='skip channels')
 parser.add_argument('--end_channels',type=int,default=64,help='end channels')
-
 parser.add_argument('--in_dim',type=int,default=1,help='inputs dimension')#
 parser.add_argument('--seq_in_len',type=int,default=144,help='input sequence length')#
 parser.add_argument('--seq_out_len',type=int,default=1,help='output sequence length')#
 parser.add_argument('--horizon', type=int, default=3)###
 parser.add_argument('--layers',type=int,default=5,help='number of layers')
-
-#parser.add_argument('--batch_size',type=int,default=32,help='batch size')
 parser.add_argument('--lr',type=float,default=0.0001,help='learning rate')
 parser.add_argument('--weight_decay',type=float,default=0.00001,help='weight decay rate')
-
 parser.add_argument('--clip',type=int,default=5,help='clip')
-
 parser.add_argument('--propalpha',type=float,default=0.05,help='prop alpha')
 parser.add_argument('--tanhalpha',type=float,default=3,help='tanh alpha')
-
 parser.add_argument('--epochs',type=int,default=1,help='')
 parser.add_argument('--num_split',type=int,default=1,help='number of splits for graphs')
 parser.add_argument('--step_size',type=int,default=100,help='step_size')
-###============================================================================================
-
 parser.add_argument('--model', type=str, default='MF-Net')
 parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu')
 parser.add_argument('--length', type=int, default=8192, help='Embedding length')
@@ -74,29 +61,23 @@ parser.add_argument('--n_epochs', type=int, default=30)
 parser.add_argument('--cache_path', type=str, default='./cache')
 parser.add_argument('--window', type=int, default=64)  # 
 parser.add_argument('--M_name', type=str, default='ME')
-
 args = parser.parse_args()
 M_name=args.M_name
 writer = SummaryWriter(args.writer_path)  #visualize
 random_seed(args.seed)
 
-
 def GetDataAndNet(archive_path, archive_name, wa, prob, mask=1):
     train_loader, test_loader, num_class = load_UEA(archive, args)#,
-
     # get the length and channel of time series
     time_stmp = train_loader.__iter__().__next__()[0].shape[2]#长度
     in_channel = train_loader.__iter__().__next__()[0].shape[1]#
     # num_class = DealDataset(train_path).num_class()
-
 #=========================================================
-
     net = gtnet(args.gcn_true, args.buildA_true, args.gcn_depth, args.num_nodes,
                   device, dropout=args.dropout, subgraph_size=args.subgraph_size,
                   node_dim=args.node_dim, dilation_exponential=args.dilation_exponential,
                   conv_channels=args.conv_channels, residual_channels=args.residual_channels,
                   skip_channels=args.skip_channels, end_channels=args.end_channels,
-
                   seq_length=args.seq_in_len, in_dim=args.in_dim, out_dim=args.seq_out_len,
                   layers=args.layers, propalpha=args.propalpha, tanhalpha=args.tanhalpha, layer_norm_affline=False,
                 #  ,t=time_stmp,#
@@ -121,11 +102,9 @@ def GetDataAndNet(archive_path, archive_name, wa, prob, mask=1):
                   )
     net = net.to(device)
 #===========================================================
-
 #===========================================
     
     return train_loader, test_loader, net, num_class
-
 
 def test(epoch):
     total_pred = torch.tensor([], dtype=torch.int64).to(device)
@@ -169,7 +148,6 @@ def test(epoch):
 
     return total_test_acc, f1_score, precision, recall, inference_time, test_loss
 
-
 def train(optimizer):
     train_time = 0
     max_accuracy = 0
@@ -183,7 +161,6 @@ def train(optimizer):
         ls = []
         s_time = time.time()
         total_train_acc = 0
-
 
         # for batch_id,(x,y) in tqdm(enumerate(train_loader), total=len(train_loader)):
         for batch_id, (x, y) in enumerate(train_loader):
@@ -212,7 +189,6 @@ def train(optimizer):
 
             pred_y = torch.squeeze(pred_y,dim=1)  
             print('pred_y',pred_y.shape)
-
             # loss
             loss = loss_func(pred_y, y.to(torch.long))
 
@@ -303,7 +279,6 @@ def train(optimizer):
                 inference_time, args.window, length)
 
 
-
 wa=1
 prob=1
 if __name__ == '__main__':
@@ -332,8 +307,6 @@ if __name__ == '__main__':
     best_tst_accuracy = 0.0
     COMPUTE_TRN_METRICS = True
     n_epochs = args.n_epochs
-
     loss_func = torch.nn.CrossEntropyLoss()
-
     train(optimizer)##训练
     
