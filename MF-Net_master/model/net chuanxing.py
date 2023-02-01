@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 from model.attention import *
 
-
 class gtnet(nn.Module):
     def __init__(self, gcn_true, buildA_true, gcn_depth, num_nodes, device, predefined_A=None,
                  static_feat=None, dropout=0.3, subgraph_size=20, node_dim=40, dilation_exponential=1,  # 2
